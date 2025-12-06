@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,7 +89,18 @@ int main(void)
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  uint8_t rxData;
+  char msg[] = "\r\n=== STM32F407 LED Remote Control ===\r\n"
+               "Commands:\r\n"
+               "  G - Toggle GREEN LED\r\n"
+               "  Y - Toggle YELLOW LED\r\n"
+               "  R - Toggle RED LED\r\n"
+               "  B - Toggle BLUE LED\r\n"
+               "  A - Turn ON all LEDs\r\n"
+               "  O - Turn OFF all LEDs\r\n"
+               "====================================\r\n";
+  
+  HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -99,6 +110,59 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if (HAL_UART_Receive(&huart3, &rxData, 1, 100) == HAL_OK)
+    {
+      HAL_UART_Transmit(&huart3, &rxData, 1, HAL_MAX_DELAY);
+      
+      switch(rxData)
+      {
+        case 'G':
+        case 'g':
+          HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nGREEN LED toggled\r\n", 20, HAL_MAX_DELAY);
+          break;
+          
+        case 'Y':
+        case 'y':
+          HAL_GPIO_TogglePin(LED_YELLOW_GPIO_Port, LED_YELLOW_Pin);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nYELLOW LED toggled\r\n", 22, HAL_MAX_DELAY);
+          break;
+          
+        case 'R':
+        case 'r':
+          HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nRED LED toggled\r\n", 19, HAL_MAX_DELAY);
+          break;
+          
+        case 'B':
+        case 'b':
+          HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nBLUE LED toggled\r\n", 20, HAL_MAX_DELAY);
+          break;
+          
+        case 'A':
+        case 'a':
+          HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(LED_YELLOW_GPIO_Port, LED_YELLOW_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_SET);
+          HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_SET);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nAll LEDs ON\r\n", 16, HAL_MAX_DELAY);
+          break;
+          
+        case 'O':
+        case 'o':
+          HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+          HAL_GPIO_WritePin(LED_YELLOW_GPIO_Port, LED_YELLOW_Pin, GPIO_PIN_RESET);
+          HAL_GPIO_WritePin(LED_RED_GPIO_Port, LED_RED_Pin, GPIO_PIN_RESET);
+          HAL_GPIO_WritePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin, GPIO_PIN_RESET);
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nAll LEDs OFF\r\n", 17, HAL_MAX_DELAY);
+          break;
+          
+        default:
+          HAL_UART_Transmit(&huart3, (uint8_t*)"\r\nUnknown command\r\n", 20, HAL_MAX_DELAY);
+          break;
+      }
+    }
   }
   /* USER CODE END 3 */
 }
